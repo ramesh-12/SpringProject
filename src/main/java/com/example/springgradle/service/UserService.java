@@ -1,7 +1,9 @@
 package com.example.springgradle.service;
 
+import com.example.springgradle.GlobalExceptionHandler.*;
 import com.example.springgradle.repository.EmployeeEntity;
 import com.example.springgradle.repository.UserRepository;
+import com.mysql.cj.util.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -16,16 +18,27 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+
     public String getUsernameById(Long id) {
-        String employee = userRepository.findById(id).toString();
-        return employee;
+        Optional<EmployeeEntity> employeeOptional = userRepository.findById(id);
+        if (employeeOptional.isPresent()) {
+            EmployeeEntity employee = employeeOptional.get();
+            return employee.toString();
+        } else {
+            throw new UserNotFoundException("User Not Found");
+        }
     }
     public String saveUser(EmployeeEntity employee) {
         userRepository.save(employee);
         return  "Saved";
     }
     public String deleteUser(Long Id) {
-        userRepository.deleteById(Id);
+        try {
+            userRepository.deleteById(Id);
+        }
+        catch (Exception e) {
+            return e.getMessage();
+        }
         return "Deleted";
     }
     public String updateUser(Long id, EmployeeEntity employee) {
@@ -33,7 +46,7 @@ public class UserService {
         if (employeeOptional.isPresent()) {
            EmployeeEntity presentEmployee = employeeOptional.get();
 
-           if(Objects.nonNull(employee.getName()) && !"".equalsIgnoreCase(employee.getName())){
+           if(StringUtils.isNullOrEmpty(employee.getName())){
                presentEmployee.setName(employee.getName());
            }
            if(Objects.nonNull(employee.getSalary())){
